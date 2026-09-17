@@ -285,15 +285,15 @@ func runWorker() {
 	defer rdb.Close()
 
 	workerCfg := &delivery.WorkerConfig{
-		Concurrency:    cfg.WorkerConcurrency,
-		Timeout:        cfg.WebhookTimeout,
-		MaxRetries:     cfg.MaxRetryAttempts,
-		RetrySchedule:  cfg.RetrySchedule,
-		MaxDelay:       cfg.RetryMaxDelay,
-		Jitter:         cfg.RetryJitter,
-		AllowPrivate:   cfg.AllowPrivateIPs,
-		Allowlist:      cfg.AllowlistCIDRs,
-		EncryptionKey:  cfg.EncryptionKey,
+		Concurrency:   cfg.WorkerConcurrency,
+		Timeout:       cfg.WebhookTimeout,
+		MaxRetries:    cfg.MaxRetryAttempts,
+		RetrySchedule: cfg.RetrySchedule,
+		MaxDelay:      cfg.RetryMaxDelay,
+		Jitter:        cfg.RetryJitter,
+		AllowPrivate:  cfg.AllowPrivateIPs,
+		Allowlist:     cfg.AllowlistCIDRs,
+		EncryptionKey: cfg.EncryptionKey,
 	}
 	worker := delivery.NewWorker(pool, rdb, workerCfg)
 	logger.Info("worker ready, consuming", "stream", "webhooker:deliveries", "group", "webhook-workers")

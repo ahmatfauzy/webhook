@@ -168,7 +168,7 @@ func (h *EndpointHandler) List(w http.ResponseWriter, r *http.Request) {
 		nextCursor = list[len(list)-1]["id"].(string)
 	}
 	writeJSON(w, r, http.StatusOK, map[string]interface{}{
-		"data": list,
+		"data":       list,
 		"pagination": map[string]interface{}{"has_more": hasMore, "next_cursor": nextCursor},
 	})
 }

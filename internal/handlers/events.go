@@ -262,9 +262,7 @@ func (h *EventHandler) List(w http.ResponseWriter, r *http.Request) {
 		nextCursor = list[len(list)-1].ID
 	}
 	writeJSON(w, r, http.StatusOK, map[string]interface{}{
-		"data": list,
+		"data":       list,
 		"pagination": map[string]interface{}{"has_more": hasMore, "next_cursor": nextCursor},
 	})
 }
-
-

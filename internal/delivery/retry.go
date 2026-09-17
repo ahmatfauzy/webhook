@@ -14,12 +14,12 @@ func IsRetryable(err error, httpStatus int, isTimeout bool) bool {
 	}
 	switch httpStatus {
 	case http.StatusRequestTimeout, // 408
-		http.StatusConflict, // 409
-		http.StatusTooManyRequests, // 429
+		http.StatusConflict,            // 409
+		http.StatusTooManyRequests,     // 429
 		http.StatusInternalServerError, // 500
-		http.StatusBadGateway, // 502
-		http.StatusServiceUnavailable, // 503
-		http.StatusGatewayTimeout: // 504
+		http.StatusBadGateway,          // 502
+		http.StatusServiceUnavailable,  // 503
+		http.StatusGatewayTimeout:      // 504
 		return true
 	default:
 		return false
@@ -29,10 +29,10 @@ func IsRetryable(err error, httpStatus int, isTimeout bool) bool {
 func IsNonRetryable(httpStatus int) bool {
 	switch httpStatus {
 	case http.StatusBadRequest, // 400
-		http.StatusUnauthorized, // 401
-		http.StatusForbidden, // 403
-		http.StatusNotFound, // 404
-		http.StatusMethodNotAllowed, // 405
+		http.StatusUnauthorized,        // 401
+		http.StatusForbidden,           // 403
+		http.StatusNotFound,            // 404
+		http.StatusMethodNotAllowed,    // 405
 		http.StatusUnprocessableEntity: // 422
 		return true
 	default:

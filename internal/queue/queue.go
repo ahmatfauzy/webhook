@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	StreamName  = "webhooker:deliveries"
-	GroupName   = "webhook-workers"
+	StreamName = "webhooker:deliveries"
+	GroupName  = "webhook-workers"
 )
 
 func NewClient(redisURL string) (*redis.Client, error) {

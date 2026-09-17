@@ -20,15 +20,15 @@ import (
 )
 
 type WorkerConfig struct {
-	Concurrency    int
-	Timeout        time.Duration
-	MaxRetries     int
-	RetrySchedule  []time.Duration
-	MaxDelay       time.Duration
-	Jitter         float64
-	AllowPrivate   bool
-	Allowlist      []string
-	EncryptionKey  []byte
+	Concurrency   int
+	Timeout       time.Duration
+	MaxRetries    int
+	RetrySchedule []time.Duration
+	MaxDelay      time.Duration
+	Jitter        float64
+	AllowPrivate  bool
+	Allowlist     []string
+	EncryptionKey []byte
 }
 
 type Worker struct {
@@ -222,11 +222,11 @@ func (w *Worker) ProcessDelivery(ctx context.Context, deliveryID string) error {
 func (w *Worker) recordAttempt(ctx context.Context, deliveryID string, attemptNum int, status string, httpStatus int, durationMs int, errStr string, bodyBytes []byte, ts, sig, url string) {
 	id := webhookULID.Generate("att_")
 	reqHeaders, _ := json.Marshal(map[string]string{
-		"Content-Type":       "application/json",
-		"X-Webhook-ID":       deliveryID,
+		"Content-Type":        "application/json",
+		"X-Webhook-ID":        deliveryID,
 		"X-Webhook-Timestamp": ts,
 		"X-Webhook-Signature": sig,
-		"User-Agent":         "Webhooker/0.1",
+		"User-Agent":          "Webhooker/0.1",
 	})
 	// we need http status etc. For simplicity store errStr in error column
 	_, _ = w.pool.Exec(ctx, `INSERT INTO delivery_attempts (id, delivery_id, attempt_number, status, http_status, request_headers, response_body, error, duration_ms) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
@@ -273,7 +273,7 @@ func (w *Worker) updateDeliveryAfterFailure(ctx context.Context, deliveryID stri
 	}
 	// Special case: if httpStatus ==0 and isRetry true (network), retry
 	if httpStatus == 0 && isRetry {
-		shouldRetry = (attemptCount+1) < w.cfg.MaxRetries
+		shouldRetry = (attemptCount + 1) < w.cfg.MaxRetries
 	}
 
 	if shouldRetry {

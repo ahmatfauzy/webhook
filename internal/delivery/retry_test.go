@@ -9,10 +9,10 @@ import (
 
 func TestIsRetryable(t *testing.T) {
 	tests := []struct {
-		status int
-		err    error
+		status  int
+		err     error
 		timeout bool
-		want   bool
+		want    bool
 	}{
 		{http.StatusOK, nil, false, false},
 		{http.StatusInternalServerError, nil, false, true},
