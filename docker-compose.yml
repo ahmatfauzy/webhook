@@ -1,0 +1,77 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: webhooker
+      POSTGRES_PASSWORD: webhooker
+      POSTGRES_DB: webhooker
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webhooker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["./webhooker", "server"]
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.example
+    environment:
+      DATABASE_URL: postgres://webhooker:webhooker@postgres:5432/webhooker?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      HTTP_ADDR: ":8080"
+      WEBHOOK_ALLOW_PRIVATE_IPS: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["./webhooker", "worker"]
+    env_file:
+      - .env.example
+    environment:
+      DATABASE_URL: postgres://webhooker:webhooker@postgres:5432/webhooker?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      WEBHOOK_ALLOW_PRIVATE_IPS: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # dashboard static will be added later:
+  # dashboard:
+  #   build:
+  #     context: ./dashboard
+  #   ports:
+  #     - "3000:80"
+
+volumes:
+  postgres_data:
+  redis_data:
