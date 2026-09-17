@@ -55,13 +55,17 @@ func NewWorker(pool *pgxpool.Pool, rdb *redis.Client, cfg *WorkerConfig) *Worker
 	client := &http.Client{
 		Timeout: cfg.Timeout,
 	}
-	return &Worker{
+	w := &Worker{
 		pool:   pool,
 		rdb:    rdb,
 		cfg:    cfg,
 		client: client,
 		logger: slog.Default(),
 	}
+	if w.logger != nil {
+		w.logger.Info("worker config", "schedule", cfg.RetrySchedule, "maxRetries", cfg.MaxRetries, "maxDelay", cfg.MaxDelay, "jitter", cfg.Jitter, "allowPrivate", cfg.AllowPrivate)
+	}
+	return w
 }
 
 // ProcessDelivery processes a single delivery by ID (used by tests and poller)
@@ -299,7 +303,7 @@ func (w *Worker) Run(ctx context.Context) error {
 		default:
 		}
 		streams, err := w.rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
-			Group:    "webhooker:deliveries",
+			Group:    "webhook-workers",
 			Consumer: consumer,
 			Streams:  []string{"webhooker:deliveries", ">"},
 			Count:    10,
@@ -340,6 +344,9 @@ func (w *Worker) pollRetrying(ctx context.Context) {
 			// poll deliveries where status=retrying and next_attempt_at <= now
 			rows, err := w.pool.Query(ctx, `SELECT id FROM deliveries WHERE status='retrying' AND next_attempt_at <= NOW() ORDER BY next_attempt_at ASC LIMIT 100 FOR UPDATE SKIP LOCKED`)
 			if err != nil {
+				if w.logger != nil {
+					w.logger.Error("poll retrying query failed", "error", err)
+				}
 				continue
 			}
 			var ids []string
@@ -349,13 +356,20 @@ func (w *Worker) pollRetrying(ctx context.Context) {
 				ids = append(ids, id)
 			}
 			rows.Close()
+			if len(ids) > 0 && w.logger != nil {
+				w.logger.Info("poll retrying found", "count", len(ids), "ids", ids)
+			}
 			for _, id := range ids {
 				// push back to stream
-				_, _ = w.rdb.XAdd(ctx, &redis.XAddArgs{
+				_, err := w.rdb.XAdd(ctx, &redis.XAddArgs{
 					Stream: "webhooker:deliveries",
 					Values: map[string]interface{}{"delivery_id": id},
 				}).Result()
-				// mark processing will be done in ProcessDelivery
+				if err != nil && w.logger != nil {
+					w.logger.Error("XAdd retry failed", "id", id, "error", err)
+				} else if w.logger != nil {
+					w.logger.Info("re-queued retry", "delivery_id", id)
+				}
 			}
 		}
 	}
